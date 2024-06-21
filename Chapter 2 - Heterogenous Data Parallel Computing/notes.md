@@ -63,8 +63,10 @@ In CUDA C, a kernel function specifies the code to be executed by all threads du
 Because all these threads execute the same code, CUDA C programming is a great example of Single program mulitple data parallel programming syte.
 
 Key Concepts:
-Single Program: All processors execute the same program code.
-Multiple Data: Each processor works on its own subset of the data independently.
+
+1. Single Program: All processors execute the same program code.
+
+2. Multiple Data: Each processor works on its own subset of the data independently.
 
 SPMD allows multiple processors to execute the same program on different data sets.
 

@@ -13,10 +13,10 @@ Two main trajectories for designing microprocessors in semiconductor industry:
 ### Why are CPUs slower than GPUs?
 
 Has to do with the design differences between the two. CPU follows a "latency-oriented design". CPUs chips have components of them that are made explicitly to reduct the execution latency of each individual thread.
-* * low-latency arithmetic units
-* * sophisticated operand delivery logic
-* * large cache memory
-* * control logic
+* low-latency arithmetic units
+* sophisticated operand delivery logic
+* large cache memory
+s* control logic
 
 These all consume chip are and power that could otherwise be used to provide more arithmetic execution units and memory access channels.
 
