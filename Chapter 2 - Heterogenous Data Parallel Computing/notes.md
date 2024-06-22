@@ -159,3 +159,17 @@ For example, if blockDim.x is 256 and blockIdx.x is 2, the starting index for bl
 For example, Blocks with dimensions of 256 - Block 0 will have threads 0-255, Block 1 will have threads 256 - 511.
 
 This methodology gives each thread a unique id.
+
+## CUDA Mode Lecture on Ch. 2
+
+data parallelism: break down work into computations that can be executed independently
+
+ CPU and GPU code is run concurrently.
+
+ On GPUs, don't be afraid of launching many threads. One thread per (output) tensor element is fine.
+
+ Threads inside the same thread block can access the same memory.
+
+ General strategy: Replace loops with grid of threads!
+
+ * need to always check bounds to ensure we do not exceed indices of allocated memory
