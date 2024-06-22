@@ -90,3 +90,35 @@ void MatrixVectorMultiplication(float* input_matrix_h, float* input_vector_h, fl
     cudaFree(output_vector_d);
 }
 ```
+
+3. Consider the following CUDA kernel and the corresponding host function that calls it:
+
+```c
+__global__ void foo_kernel(float* a, float* b, unsigned int M, unsigned int N){
+    unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
+    if(row < M && col < N){
+        b[row*N + col] = a[row*N + col]/2.1f + 4.8f;
+    }
+}
+
+void foo(float* a_d, float* b_d){
+    unsigned int M = 150;
+    unsigned int N = 300;
+    dim3 bd(16, 32);
+    dim3 gd((N - 1)/16 + 1, (M - 1)/32 + 1);
+    foo_kernel <<<gd, bd>>>(a_d, b_d, M, N);
+}
+```
+
+a. What is the number of threads per block? -> 16 * 32 = 512 threads per block
+
+b. What is the number of threads in the grid? ->  13 * 5 = 65 blocks * 512 threds per block = 33280
+
+c. What is the number of blocks in the grid? -> 13 * 5 = 65 blocks
+
+d. What is the numer of threads that execute the kernel code? -> That will depend on the size of the input pointers, `a_d` and `b_d`. But the max amount of threads that will execute is 33280. The code in the if statement will execute once on a thread for every output element. So, there could be less threads executed if the amount of output elements does not add up to the max thread count of 33280.
+
+4. Consider a 2D matrix with a width of 400 and a height of 500. The matrix is stored as a 1D array. Specify the array index of the matrix element at row 20 and column 10. -> 400 * 20 + 10 = index 8010
+
+5. Consider a 3D tensor with a width of 400, a height of 500, and a depth of 300. The tensor is stored as a 1D array in row-major order. Specify the array index of th etensor element at x = 10, y = 20, and z = 5. -> z * (w * h) + y * w + x => 5 * (400 * 500) + 500 * 400 + 400  = 1008010
