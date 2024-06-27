@@ -81,3 +81,124 @@ Some applications require threads to collaborate with each other, which requires
 MPI -> Message Passing Interface for scalable cluster computing
 
 OpenMP -> for shared memeory multiprocessor systems
+
+# PMPP UIUC Course - Spring 2018 (Lecture 1)
+
+https://www.youtube.com/watch?v=kwtn2NtFIuA
+
+CPUs: Latency oriented design
+
+* high clock frequency
+
+* large caches
+
+* powerful ALU
+
+Clock frequency measured in Hertz (HZ)/ GigaHertz (GH) in modern computers. It represents the number of cycles a CPU can perform per second, or the speed at which a microprocessor executes instructions.
+
+Caches in CPU are meant to convert some memory accesses from DRAM accesses into on chip cache access.
+
+* DRAM access today takes about 500 clock cycles
+
+* L3 cache 50 cycles, L2 15 clock cycles, L1 5 cycles
+
+So any memory accesses you convert to Cache access, you shorten the access latency dramatically.  
+
+GPUs follow a throughput oriented design.
+
+* moderate clock frequency
+
+* small caches, to boost memory throughput
+
+* simple control (no branch prediction, no data forwarding)
+
+* require massive number of threads to tolerate high latency
+
+ GPU runs around 1.1GH clock frequency.
+
+ Applications benefit from both CPU and GPU. CPU is used for sequential parts where latency matters. GPUs for parallel parts where throughput wins.
+
+ * CPUs can be 10x faster than GPUs for sequential code
+
+ * GPUs can be 10x faster than CPUs for parallel code
+
+ nvLink connects CPU and GPU? -> NVIDIA documentation says nvLink is used for direct GPU to GPU connections.
+ https://www.nvidia.com/en-us/data-center/nvlink/
+
+ Parallel Programming Workflow:
+
+ 1. Identify compute intensive parts of an application
+
+ 2. Adopt/create scalable algorithms
+
+ 3. Optimize data arrangements to maximize locality
+
+ 4. Performance Tuning
+
+ 5. Pay attention to code portability, scalability, and maintainability
+
+ Whenever threads start to do different things, we have a phenomena called Divergence. 
+
+ The total amount of time that it take to complete a job is limited by the thread that takes the longest to finsih.
+
+ Data is one of the most important parts of computing. Compares accessing data to sucking a drink out of a straw when what we really want is a gushing flow of water. 
+
+ # PMPP UIUC Course - Spring 2018 (Lecture 2)
+
+  If your data does not support parallel data processing, you will not be able to parallelize the operations on it.
+
+  Each thread within a block is going to be executing a kernel function (SPMD - Single Program Multiple Data ). A CUDA kernel is executed by a grid (array) of threads. 
+
+  * Grid refers to the universe of all of the thread blocks with all of the threads
+
+  Each thread has an index that is used to compute memory addresses and make control decisions.
+
+Thread indexing: Divide the thread array into multiple "blocks".
+
+* threads within a block cooperate via shared memory, atomic operations, and barrier synchronization
+
+* threads in different blocks cooperate less
+
+1D case: index = blockIdx.x * blockDim.x + threadIdx.x
+
+Threads that are outside the bounds of the number of operations you want to do will have some divergence because we typically program the kernel to check that the threadId is within some bound that indicates the number of elements we want to operate on. If the id is outside this bound, then we skip the actual computation within the kernel. The kernel is still called but because we have different behavior, we have introduced Divergence.
+
+The method of copying data from host to device and vice versa is actually a very primitive way of utilizing a GPU. It will slow down your operations a lot if you are doing something as simple as vector addition. For more comlex operations, this may not be the case. The computation speed up may be worth the overhead of copying data between host and device.
+
+Device code can:
+
+* R/W per thread memory registers
+
+* R/W per block global memory
+
+Host code can:
+
+* Transfer data to/from per grid global memory
+
+All of the host code that goes into invoking a kernel on the GPU can have their own verying different performances based on the CPU they are executing on. All of the CUDA specific APIs were implemented at the CPU driver level by NVIDIA, but depending on the type of CPU you are running the code on (x86, Arm, Intel, IBM, Apple Silicon, etc.) the performance of these can vary even if the kernel code is executed on the same NVIDIA GPU.
+
+Once inside a kernel, the very first thing you should do is determine what the unique index i is. 
+
+`i = blockIdx.x * blockDim.x + threadIdx.x`
+
+This is the threads unique position among all of the elements.
+
+`__golbal__` keyword tells compiler that this specific function will be launched with specific parameters and with multiple threads on the GPU.
+
+There is a penalty for using a thread block size that is not a multiple of 32. Doing so would cause you to under utilize hardward.
+
+Q: Does the number of blocks in a grid effect performance? Response: "Slightly"
+
+`ceil(n/256.0)` -> in C, all non float values are truncated. For example, 3.35 will be truncated to 3. By utilizing the `ceil()` function coupled with a denominator that ends in a decimal ensures that the formula returns a float and that that float is rounded up to the nearest whole number. This is required when determining the number of blocks as you cannot have partial blocks and we need enough blocks to fit our dataset.
+
+Doing any type of type casting on the GPU/Device/Kernel can dramatically slow your code down. As a rule of thumb, try to do all type casting on the CPU.
+
+All the thread blocks launched by a kernel are scheduled in what is a called Streaming Multiprocessors. The streaming multiprocessors will be accessing RAM to process the data.
+
+`__global__` -> called on the host and executed on the device. A kernel function must return `void`.
+
+`__device__` -> can be called from the device. Kernel function can call other functions.
+
+`__host__` -> can only be called on the host. by default, all functions are host functions unless otherwise specified.
+
+When your code is compiled, it's passed to the NVCC compiler. This compiler separates your code into device (PTX) and host code.
