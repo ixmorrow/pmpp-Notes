@@ -173,3 +173,54 @@ data parallelism: break down work into computations that can be executed indepen
  General strategy: Replace loops with grid of threads!
 
  * need to always check bounds to ensure we do not exceed indices of allocated memory
+
+ # PMPP UIUC Course - Spring 2018 (Lecture 3)
+
+https://www.youtube.com/watch?v=6fO0jy24aEM
+
+ C/C++ use row major layout for higher dimensional data architecture. This means the rows of a matrix are stored linearly in consecutive order.
+
+ * Formula -> Row*Width + Col
+
+ In C/C++, if you allocate data dynamically you cannot access the data using multidimensional syntax. You have to use linear 1D syntax to index the data. 
+
+ * dynamically allocating memory means to allocate memory at runtime instead of compile time.
+
+ Only the owner of output data will do the compute.
+
+ Thread blocks can operate in any order.
+
+ If you write CUDA code that makes use of a completely new feature on a new GPU, then you would possibly run into an issue running that same code on an older GPU that did not support this feature. To solve this, NVIDIA will utilize emulation techniques to implement the same features on older GPUs through CUDA drivers and compilers.
+
+## Streaming Multiprocessors
+
+Threads are assigned to Streaming Multiprocessors (SM) in block granularity. These are similar to cores on traditional CPUs today.
+
+Threads organized into thread blocks at runtime and these thread blocks are assigned to streaming multiprocessors. Each thread block can be assigned to 1 SM.
+
+Maxwell SMs can take anywhere from 1-32 thread blocks at a time. Maxwell SMs can also take up to 2048 threads, this is the sum of the threads per thread block that are assigned to the SM.
+
+* these statistics will change with each iteration and new GPU version released from NVIDIA
+
+* these are from 2018, and are probably much different now for today's SOTA chips from NVIDIA
+
+## Thread Scheduling
+
+Warps are an implementation concept and from a CUDA api pov, they do not exist.
+
+Each block is executed as 32 thread warps. Warps are divided based on their linearized thread index:
+* Threads 0-31: warp 0
+
+* threads 32-63: warp 1
+
+Warps are scheduling units in Streaming Multiprocessors.
+
+Why size of 32 for Warps? -> the warp size was chosen to ensure that in most cases there are enough warps to keep the GPU busy based on the typical size of the thread blocks. If the warp size were too big, then the thread blocks may not have many warps. We want many scheduling units that the chip can choose from at any given point in time.
+
+Another reason is related to divergence. If warps are too big, the probability of threads in warps wanting to do different things (based on conditions in the kernel with the index of the element) goes up. We want to limit the amount of warps that see divergence.
+
+What if a block doesn't have a thread size that is a multiple of 32? -> No matter the size the programmer gives the block, there is no such thing as blocks without a multiple of 32 number of threads. In the CUDA implementation, it will round the number of threads up to the nearest multiple of 32 but just ignore those additional threads.
+
+* for this reason, when you have a block size that is not a multiple of 32, you will always have a little bit of divergence that you may or may not be aware of!
+
+No guarantee on the execution order of the warps.
