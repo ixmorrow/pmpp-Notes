@@ -57,4 +57,41 @@ The main reason that I can think of is that global memory is shared and accesibl
 
 Shared memory variables are shared among threads within a block. For this reason, I believe each block would have its own instance of the shared variable. Since there are 1000 blocks, this would create 1000 instances of the variable.
 
-8. 
+8. Consider performing a matrix multiplication of two matrices of NxN. How many times is each element in the input matrices requested from global memory when:
+
+* There is no tiling?
+* Tiles of size TxT are used?
+
+Matrix multiplication without tiling and assuming a single thread is responsible for one element in the output, means each thread would have to load an entire row from Matrix A and an entire Column from Matrix B to compute its output element. That is 2*N accesses per thread.
+
+With Tiling, each thread acceses 2*T elements per thread.
+
+9. A kernel performs 36 floating-point operations and seven 32-bit global memory accesses per thread. For each of the following properties, indicate whether this kernel is memory bound or compute bound:
+
+a. Peak FLOPS=200 GFLOPS, peak memory bandwidth=100 GB/second.
+
+Need to calculate the compute to memory ratio for the kernel and compare it to the hardware limitations.
+Kernel
+- 36 FLOPS
+- 7 global memory accesses (32-bits, 4 bytes)
+
+7 * 4 = 28 bytes per thread of global memory accesses.
+
+36 flops/28 bytes per thread = 1.29 FLOPS/byte
+
+Hardware
+- 200 GFLOPS/100 GB/s = 2 FLOPS/byte
+
+The kernel's compute to memory ratio is lower than the hardware's compute to memory ratio. This means that the kernel is performing fewer floating-point operations per byte of data accessed than the hardware can support. Since the kernel's ratio is lower than the hardware's it indicates the kernel cannot fully utilize the hardware's capabilities due to being limited by memory bandwidth. Therefore, the kernel is memory bound.
+
+b. Peak FLOPS=300 GFLOPS, peak memory bandwidth=250 GB/second.
+
+Kernel
+36 flogs/28 bytes per thread = 1.29 FLOPS/byte
+
+Hardware
+- 300 GFLOPS/250 GB/s = 1.2 FLOPS/byte
+
+The kernel's compute to memory bandwidth is greater than the hardware's. This indicates that the kernel is compute bound. This means the kernel is performing more floating-point operations per byte of data than what the hardware is optimized for. The bottleneck is the processing speed of the computational units (e.g., ALUs, FPUs).
+
+10. 
