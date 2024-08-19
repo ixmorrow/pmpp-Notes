@@ -137,7 +137,7 @@ Let’s go over this indexing because it has taken me a while to understand what
 
 Together `Row*Width + p*TILE_WIDTH + tx` returns the index for a specific element within a specific tile in matrix M. This is then stored in the `ds_M` data structure which is in the shared memory on chip because it was defined in the beginning of the kernel → `__shared__ float ds_M[TILE_WIDTH][TILE_WIDTH];` This is exactly the size of a tile and is reused throughout the process.
 
-- `p*TILE_WIDTH+ty)*Width` → p is the Tile index and multiplying this by the `TILE_WIDTH` will get you the starting index of this specific tile. Adding `ty` here will then get you a unique element from a different row within the current tile. So with that, you have the starting element of an item in a specific tile in a specific row. Multiplying this by the Width will return this items real index when stored in linear row major layout.
+- `(p*TILE_WIDTH+ty)*Width` → p is the Tile index and multiplying this by the `TILE_WIDTH` will get you the starting index of this specific tile. Adding `ty` here will then get you a unique element from a different row within the current tile. So with that, you have the starting element of an item in a specific tile in a specific row. Multiplying this by the Width will return this items real index when stored in linear row major layout.
     - `ty` is the row we care about, multiplying this by `Width` will get you the actual starting index of this specific row in memory because these are stored in row major format in consecutive memory addresses.
 - `+ Col` → moves the index to the specific column of this row
     - `int Col = bx * blockDim.x + tx;` → so Col is the unique Col this thread cares about in a given row. Once we have the right row for our tile (previous step), we can simply add this to that index to get the specific element we are interested in
@@ -254,3 +254,26 @@ matrixMulKernel<<<dimGrid, dimBlock, size>>> (Md, Nd, Pd, Width, size/2, size/2)
 ```
 
 May also be helpful to add input params to the kernel function to force the caller to pass in the size of M_ds and N_ds respectively so that the kernel code knows where on ends and the other begins.
+
+# PMPP UIUC Course - Spring 2018 (Lecture 5)
+
+* Global memory is implemented in DRAM - slow
+
+Tiling:
+- Partition data into subsets called Tiles
+- Handle data from each tile in a single thread block by:
+	- loading the tiles from global memory to shared memory using multiple threads to exploit memory-level parallelism
+	- performing the computation on data in shared memory means each thread can efficiently access any data element in the entire tile
+- load results from shared memory back into global memory
+
+When you do high performance programming, it's not a lot more lines of code. It may only be a few lines of code difference. But the engineering decisions that go into those lines of code are much more intentional.
+
+The professor suggests writing down the decisions that went into the design of our code because in a month we won't remember why.
+
+# CUDA Mode Lecture on Chapter 5
+
+Computational intensity - FLOP/Byte of memory transfer
+
+You can hide some of the memory transfer latency if other warps can compute while other warps are waiting for data from global memory to arrive.
+
+Implement flash attention from scratch? Not sure what flash attention is or how to implement it but will look into it.

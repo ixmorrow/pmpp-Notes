@@ -202,3 +202,4 @@ All the thread blocks launched by a kernel are scheduled in what is a called Str
 `__host__` -> can only be called on the host. by default, all functions are host functions unless otherwise specified.
 
 When your code is compiled, it's passed to the NVCC compiler. This compiler separates your code into device (PTX) and host code.
+
